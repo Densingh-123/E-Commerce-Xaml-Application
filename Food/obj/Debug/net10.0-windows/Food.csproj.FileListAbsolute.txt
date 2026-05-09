@@ -1,0 +1,5 @@
+C:\Users\Dens\source\repos\Food\Food\obj\Debug\net10.0-windows\Food.csproj.AssemblyReference.cache
+C:\Users\Dens\source\repos\Food\Food\obj\Debug\net10.0-windows\App.g.cs
+C:\Users\Dens\source\repos\Food\Food\obj\Debug\net10.0-windows\Food_Content.g.cs
+C:\Users\Dens\source\repos\Food\Food\obj\Debug\net10.0-windows\Food_MarkupCompile.cache
+C:\Users\Dens\source\repos\Food\Food\obj\Debug\net10.0-windows\Food_MarkupCompile.lref

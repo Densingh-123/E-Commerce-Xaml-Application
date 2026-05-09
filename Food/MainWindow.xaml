@@ -1,0 +1,1408 @@
+<Window x:Class="Food.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Food"
+        xmlns:vm="clr-namespace:Food.ViewModels"
+        xmlns:conv="clr-namespace:Food.Converters"
+        mc:Ignorable="d"
+        Title="D-Mart | Professional Marketplace" Height="850" Width="1350"
+        WindowStartupLocation="CenterScreen"
+        Background="Transparent"
+        FontFamily="{StaticResource MainFont}"
+        WindowStyle="None" AllowsTransparency="True">
+
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
+
+    <Window.Resources>
+        <conv:StringToVisibilityConverter x:Key="PageVisConv"/>
+        <conv:BooleanToBrushConverter x:Key="BoolBrushConv"/>
+        <conv:MultiBindingConverter x:Key="MultiParamConv"/>
+        <BooleanToVisibilityConverter x:Key="BoolVisConv"/>
+        <conv:EqualityToBoolConverter x:Key="EqConv"/>
+        <conv:ObjectToVisibilityConverter x:Key="ObjVisConv"/>
+        <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolVisConv"/>
+
+        <!-- Tilt & Hover Animation for Cards -->
+        <Style x:Key="TiltCardStyle" TargetType="Border" BasedOn="{StaticResource CardStyle}">
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <TransformGroup>
+                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                        <SkewTransform AngleX="0" AngleY="0"/>
+                        <RotateTransform Angle="0"/>
+                    </TransformGroup>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <EventTrigger RoutedEvent="MouseEnter">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Children[0].ScaleX" To="1.06" Duration="0:0:0.3"/>
+                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Children[0].ScaleY" To="1.06" Duration="0:0:0.3"/>
+                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Children[1].AngleX" To="1.5" Duration="0:0:0.3"/>
+                            <ColorAnimation Storyboard.TargetProperty="Background.Color" To="#FFFBFA" Duration="0:0:0.3"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+                <EventTrigger RoutedEvent="MouseLeave">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Children[0].ScaleX" To="1.0" Duration="0:0:0.3"/>
+                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Children[0].ScaleY" To="1.0" Duration="0:0:0.3"/>
+                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Children[1].AngleX" To="0" Duration="0:0:0.3"/>
+                            <ColorAnimation Storyboard.TargetProperty="Background.Color" To="White" Duration="0:0:0.3"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="NavButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="FontWeight" Value="ExtraBold"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="Margin" Value="5,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="20">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#15000000"/>
+                                <Setter Property="Foreground" Value="{StaticResource SecondaryBrush}"/>
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="1.1" ScaleY="1.1"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="LoadingSpinnerStyle" TargetType="Ellipse">
+            <Setter Property="Width" Value="60"/>
+            <Setter Property="Height" Value="60"/>
+            <Setter Property="Stroke" Value="{StaticResource SecondaryBrush}"/>
+            <Setter Property="StrokeThickness" Value="6"/>
+            <Setter Property="StrokeDashArray" Value="1.5, 3"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <RotateTransform CenterX="30" CenterY="30"/>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <EventTrigger RoutedEvent="Loaded">
+                    <BeginStoryboard>
+                        <Storyboard RepeatBehavior="Forever">
+                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)" From="0" To="360" Duration="0:0:1.2"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Modern TabControl Style -->
+        <Style x:Key="ModernTabControl" TargetType="TabControl">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+
+        <Style x:Key="ModernTabItem" TargetType="TabItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="Gray"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="30,15"/>
+            <Setter Property="Margin" Value="0,0,10,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{StaticResource PrimaryBrush}" BorderThickness="0,0,0,3" Margin="{TemplateBinding Margin}" CornerRadius="10,10,0,0">
+                            <ContentPresenter x:Name="contentPresenter" ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="False">
+                                <Setter TargetName="border" Property="BorderThickness" Value="0"/>
+                                <Setter Property="Foreground" Value="Gray"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                <Setter Property="Background" Value="#10000000"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#05000000"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border CornerRadius="30" Background="{StaticResource BackgroundBrush}" BorderBrush="#EEE" BorderThickness="1" ClipToBounds="True">
+        <Grid>
+            <!-- Background Image/Pattern -->
+            <Image Source="Assets/website/coffee-beans-bg.png" Stretch="UniformToFill" Opacity="0.02"/>
+            
+            <DockPanel>
+                <!-- Title Bar -->
+                <Border DockPanel.Dock="Top" Background="{StaticResource PrimaryBrush}" Height="45" MouseLeftButtonDown="TitleBar_MouseDown">
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="25,0">
+                            <Image Source="Assets/website/coffee_logo.png" Height="25" Margin="0,0,12,0"/>
+                            <TextBlock Text="D-Mart | Quality Marketplace" Foreground="White" FontSize="13" FontWeight="SemiBold" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <Button Content="−" Foreground="White" Background="Transparent" BorderThickness="0" Width="45" Height="45" Click="Minimize_Click" FontSize="22"/>
+                            <Button Content="□" Foreground="White" Background="Transparent" BorderThickness="0" Width="45" Height="45" Click="FullScreen_Click" FontSize="18"/>
+                            <Button Content="✖" Foreground="White" Background="Transparent" BorderThickness="0" Width="45" Height="45" Click="Close_Click" FontSize="18"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Navigation Header -->
+                <Border DockPanel.Dock="Top" Background="#CCFFFFFF" Height="90" Visibility="{Binding CurrentUser, Converter={StaticResource ObjVisConv}}" Padding="60,0">
+                    <Border.Effect><DropShadowEffect BlurRadius="20" Opacity="0.05" ShadowDepth="4"/></Border.Effect>
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="D-MART" Foreground="{StaticResource PrimaryBrush}" FontSize="32" FontWeight="ExtraBold" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <!-- User Navigation -->
+                            <StackPanel Orientation="Horizontal" Visibility="{Binding CurrentUser.IsAdmin, Converter={StaticResource InverseBoolVisConv}}">
+                                <Button Content="SHOP" Command="{Binding NavigateCommand}" CommandParameter="Dashboard" Style="{StaticResource NavButtonStyle}" Width="150" Height="45"/>
+                                <Button Content="OFFERS" Command="{Binding NavigateCommand}" CommandParameter="Offers" Style="{StaticResource NavButtonStyle}" Width="150" Height="45"/>
+                                <Button Content="MY ORDERS" Command="{Binding NavigateCommand}" CommandParameter="MyOrders" Style="{StaticResource NavButtonStyle}" Width="150" Height="45"/>
+                            </StackPanel>
+
+                            <!-- Admin Navigation -->
+                            <StackPanel Orientation="Horizontal" Visibility="{Binding CurrentUser.IsAdmin, Converter={StaticResource BoolVisConv}}">
+                                <Button Content="ADMIN DASHBOARD" Command="{Binding NavigateCommand}" CommandParameter="Admin" Style="{StaticResource NavButtonStyle}" Width="200" Height="45"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <Button Command="{Binding NavigateCommand}" CommandParameter="Cart" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                <Grid Margin="0,0,30,0">
+                                    <TextBlock Text="🛒" FontSize="28"/>
+                                    <Border Background="{StaticResource SecondaryBrush}" CornerRadius="12" MinWidth="22" Height="22" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-8,-12,0" BorderBrush="White" BorderThickness="2">
+                                        <TextBlock Text="{Binding CartItems.Count}" Foreground="White" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </Grid>
+                            </Button>
+                            
+                            <Grid>
+                                <Button Command="{Binding ToggleProfilePopupCommand}" Background="Transparent" BorderThickness="0" Cursor="Hand" Margin="0,0,15,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border CornerRadius="25" Width="50" Height="50" Background="{StaticResource PrimaryBrush}" BorderBrush="{StaticResource SecondaryBrush}" BorderThickness="2">
+                                            <TextBlock Text="{Binding CurrentUser.Name[0]}" Foreground="White" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text=" ▾" VerticalAlignment="Center" FontSize="18" Foreground="Gray" Margin="5,0,0,0"/>
+                                    </StackPanel>
+                                </Button>
+                                
+                                <Popup IsOpen="{Binding IsProfilePopupOpen}" StaysOpen="False" Placement="Bottom" AllowsTransparency="True" PopupAnimation="Fade">
+                                    <Border Background="White" CornerRadius="20" Padding="10" Width="220" Margin="0,15,0,0" BorderBrush="#EEE" BorderThickness="1">
+                                        <Border.Effect><DropShadowEffect BlurRadius="30" Opacity="0.1" ShadowDepth="10"/></Border.Effect>
+                                        <StackPanel>
+                                            <Button Content="My Profile" Command="{Binding NavigateCommand}" CommandParameter="Profile" Style="{StaticResource NavButtonStyle}" HorizontalContentAlignment="Left" Margin="0,2"/>
+                                            <Button Content="My Order History" Command="{Binding NavigateCommand}" CommandParameter="MyOrders" Style="{StaticResource NavButtonStyle}" HorizontalContentAlignment="Left" Margin="0,2"/>
+                                            <Separator Margin="5,8"/>
+                                            <Button Content="Sign Out" Command="{Binding LogoutCommand}" Foreground="Red" Style="{StaticResource NavButtonStyle}" HorizontalContentAlignment="Left" Margin="0,2"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Content Area -->
+                <Grid>
+                    <!-- PAGE TRANSITION WRAPPER -->
+                    <Grid.Resources>
+                        <Style TargetType="Grid" x:Key="AnimatedPage">
+                            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                            <Setter Property="RenderTransform"><Setter.Value><TranslateTransform/></Setter.Value></Setter>
+                            <Style.Triggers>
+                                <Trigger Property="Visibility" Value="Visible">
+                                    <Trigger.EnterActions><BeginStoryboard Storyboard="{StaticResource FadeIn}"/></Trigger.EnterActions>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Resources>
+
+                    <!-- LOGIN PAGE -->
+                    <Grid Visibility="{Binding CurrentPage, Converter={StaticResource PageVisConv}, ConverterParameter=Login}" Style="{StaticResource AnimatedPage}">
+                        <Grid.Background>
+                            <ImageBrush ImageSource="Assets/website/coffee-footer.jpg" Stretch="UniformToFill" Opacity="0.95"/>
+                        </Grid.Background>
+                        <Border Style="{StaticResource GlassStyle}" Width="480" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="60">
+                            <StackPanel>
+                                <TextBlock Text="Sign In" Foreground="{StaticResource PrimaryBrush}" FontSize="42" FontWeight="ExtraBold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                <TextBlock Text="Enter your details to access your account" Foreground="Gray" HorizontalAlignment="Center" Margin="0,0,0,45"/>
+                                
+                                <TextBlock Text="Email Address" FontWeight="Bold" FontSize="13" Margin="0,0,0,5"/>
+                                <TextBox x:Name="LoginEmail" Style="{StaticResource ModernTextBox}" Text="den@gmail.com"/>
+                                
+                                <TextBlock Text="Password" FontWeight="Bold" FontSize="13" Margin="0,20,0,5"/>
+                                <Grid>
+                                    <PasswordBox x:Name="LoginPass" Style="{StaticResource ModernPasswordBox}" PasswordChanged="LoginPass_PasswordChanged"/>
+                                    <TextBox x:Name="LoginPassText" Style="{StaticResource ModernTextBox}" Visibility="Collapsed" TextChanged="LoginPassText_TextChanged"/>
+                                    <ToggleButton x:Name="LoginEyeBtn" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,15,0" Background="Transparent" BorderThickness="0" Checked="LoginEyeBtn_Checked" Unchecked="LoginEyeBtn_Unchecked">
+                                        <TextBlock Text="👁️" FontSize="18" Foreground="Gray"/>
+                                    </ToggleButton>
+                                </Grid>
+                                
+                                <Button Content="LOGIN TO ACCOUNT" Click="Login_Click" Margin="0,45,0,20" Style="{StaticResource PrimaryButton}" Height="60"/>
+                                <Button Content="Don't have an account? Create one" Command="{Binding NavigateCommand}" CommandParameter="Register" Background="Transparent" Foreground="{StaticResource SecondaryBrush}" FontWeight="Bold" BorderThickness="0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- REGISTER PAGE -->
+                    <Grid Visibility="{Binding CurrentPage, Converter={StaticResource PageVisConv}, ConverterParameter=Register}" Style="{StaticResource AnimatedPage}">
+                         <Grid.Background>
+                            <ImageBrush ImageSource="Assets/website/coffee-footer.jpg" Stretch="UniformToFill" Opacity="0.95"/>
+                        </Grid.Background>
+                        <Border Style="{StaticResource GlassStyle}" Width="550" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="50">
+                             <ScrollViewer VerticalScrollBarVisibility="Hidden">
+                                <StackPanel>
+                                    <TextBlock Text="Join Epicurean" Foreground="{StaticResource PrimaryBrush}" FontSize="42" FontWeight="ExtraBold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                    <TextBlock Text="Start your gourmet journey today" Foreground="Gray" HorizontalAlignment="Center" Margin="0,0,0,35"/>
+                                    
+                                    <TextBlock Text="Full Name" FontWeight="Bold" Margin="0,10,0,5"/>
+                                    <TextBox x:Name="RegName" Style="{StaticResource ModernTextBox}"/>
+                                    
+                                    <TextBlock Text="Email Address" FontWeight="Bold" Margin="0,15,0,5"/>
+                                    <TextBox x:Name="RegEmail" Style="{StaticResource ModernTextBox}"/>
+                                    
+                                    <TextBlock Text="Password" FontWeight="Bold" FontSize="13" Margin="0,15,0,5"/>
+                                    <Grid>
+                                        <PasswordBox x:Name="RegPass" Style="{StaticResource ModernPasswordBox}" PasswordChanged="RegPass_PasswordChanged"/>
+                                        <TextBox x:Name="RegPassText" Style="{StaticResource ModernTextBox}" Visibility="Collapsed" TextChanged="RegPassText_TextChanged"/>
+                                        <ToggleButton x:Name="RegEyeBtn" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,15,0" Background="Transparent" BorderThickness="0" Checked="RegEyeBtn_Checked" Unchecked="RegEyeBtn_Unchecked">
+                                            <TextBlock Text="👁️" FontSize="18" Foreground="Gray"/>
+                                        </ToggleButton>
+                                    </Grid>
+                                    
+                                    <TextBlock Text="Phone" FontWeight="Bold" Margin="0,15,0,5"/>
+                                    <TextBox x:Name="RegPhone" Style="{StaticResource ModernTextBox}"/>
+                                    
+                                    <TextBlock Text="Shipping Address" FontWeight="Bold" Margin="0,15,0,5"/>
+                                    <TextBox x:Name="RegAddr" Style="{StaticResource ModernTextBox}" Height="90" TextWrapping="Wrap" AcceptsReturn="True"/>
+                                    
+                                    <Button Content="CREATE MY ACCOUNT" Click="Register_Click" Margin="0,45,0,20" Style="{StaticResource PrimaryButton}" Height="60"/>
+                                    <Button Content="Back to Login" Command="{Binding NavigateCommand}" CommandParameter="Login" Background="Transparent" Foreground="Gray" BorderThickness="0"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
+
+                    <!-- DASHBOARD PAGE -->
+                    <ScrollViewer Visibility="{Binding CurrentPage, Converter={StaticResource PageVisConv}, ConverterParameter=Dashboard}" VerticalScrollBarVisibility="Auto" Style="{StaticResource PageStyle}">
+                        <StackPanel>
+                            <!-- Hero Carousel -->
+                            <Grid Height="550" Margin="0,0,0,50">
+                                <Border CornerRadius="40" ClipToBounds="True">
+                                    <Grid>
+                                        <Image Source="{Binding CurrentCarouselImage}" Stretch="UniformToFill"/>
+                                        <Border Background="#88000000"/>
+                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left" Margin="80,0">
+                                            <TextBlock Text="PREMIUM COLLECTION" Foreground="{StaticResource SecondaryBrush}" FontSize="14" FontWeight="Bold" Margin="0,0,0,20"/>
+                                            <TextBlock Text="The Art of" Foreground="White" FontSize="72" FontWeight="ExtraBold"/>
+                                            <TextBlock Text="Fine Dining" Foreground="{StaticResource SecondaryBrush}" FontSize="72" FontWeight="ExtraBold" Margin="0,-15,0,25"/>
+                                            <TextBlock Text="{Binding AdText}" Foreground="#EEE" FontSize="20" Width="600" TextWrapping="Wrap" LineHeight="32"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,45,0,0">
+                                                <Button Content="SHOP THE MENU" Style="{StaticResource PrimaryButton}" Width="220" Height="65"/>
+                                                <Button Content="VIEW OFFERS" Background="Transparent" Foreground="White" BorderBrush="White" BorderThickness="2" Style="{StaticResource PrimaryButton}" Width="220" Height="65" Margin="25,0,0,0"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+
+                            <Border Background="White" Padding="80,60">
+                                <StackPanel>
+                                    
+                                    <!-- Quick Action Buttons -->
+                                    <UniformGrid Columns="2" Margin="0,0,0,60" Height="100">
+                                        <Button Command="{Binding NavigateCommand}" CommandParameter="Profile" Margin="10,0" Style="{StaticResource PrimaryButton}" Background="#F8F9FA" Foreground="{StaticResource PrimaryBrush}" BorderBrush="#EEE" BorderThickness="1">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="👤" FontSize="24" Margin="0,0,15,0"/>
+                                                <TextBlock Text="MY PROFILE" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                                                                 <Button Command="{Binding NavigateCommand}" CommandParameter="MyOrders" Margin="10,0" Style="{StaticResource PrimaryButton}" Background="#F8F9FA" Foreground="{StaticResource PrimaryBrush}" BorderBrush="#EEE" BorderThickness="1">
+
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="📦" FontSize="24" Margin="0,0,15,0"/>
+                                                <TextBlock Text="MY ORDERS" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </UniformGrid>
+
+                                    <!-- Search & Category Bar -->
+                                    <Grid Margin="0,0,0,60">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Grid.Column="0" Margin="0,0,15,0">
+                                            <ItemsControl ItemsSource="{Binding Categories}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel Orientation="Horizontal"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Button Content="{Binding}" Command="{Binding DataContext.SetCategoryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Margin="0,0,10,0" Padding="25,0" Height="55" MinWidth="100">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+                                                                    <Setter Property="Background" Value="#F8F9FA"/>
+                                                                    <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Value="True">
+                                                                            <DataTrigger.Binding>
+                                                                                <MultiBinding Converter="{StaticResource EqConv}">
+                                                                                    <Binding />
+                                                                                    <Binding Path="DataContext.SelectedCategory" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/>
+                                                                                </MultiBinding>
+                                                                            </DataTrigger.Binding>
+                                                                            <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+                                                                            <Setter Property="Foreground" Value="White"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+
+                                        <Border Grid.Column="1" Width="450" Background="#F8F9FA" CornerRadius="30" Padding="20,5" BorderBrush="#EEE" BorderThickness="1">
+                                            <DockPanel>
+                                                <TextBlock Text="🔍" VerticalAlignment="Center" Margin="10,0" Foreground="Gray" FontSize="18"/>
+                                                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" VerticalAlignment="Center" FontSize="16" Padding="15"/>
+                                            </DockPanel>
+                                        </Border>
+                                    </Grid>
+                                    <!-- Dashboard Main Content: Products & Sidebar Ads -->
+                                    <Grid Margin="0,30">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="320"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Product Grid (Left) -->
+                                        <ItemsControl Grid.Column="0" ItemsSource="{Binding FilteredProducts}">
+                                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="3"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border x:Name="ProductCard" Width="260" Height="320" Margin="10" Background="White" CornerRadius="25" Padding="0,0,0,15">
+                                                        <Border.Effect><DropShadowEffect BlurRadius="20" Color="Black" Opacity="0.05" ShadowDepth="4"/></Border.Effect>
+                                                        <Grid>
+                                                            <StackPanel>
+                                                                <Border Height="180" CornerRadius="25,25,0,0" Background="#FBFBFB" ClipToBounds="True">
+                                                                    <Button Command="{Binding DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Background="Transparent" BorderThickness="0">
+                                                                        <Image Source="{Binding ImagePath}" Stretch="Uniform" Margin="15"/>
+                                                                    </Button>
+                                                                </Border>
+                                                                <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="Bold" Margin="15,10,15,5" Foreground="{StaticResource PrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                                                <TextBlock Text="{Binding Category}" FontSize="11" Foreground="{StaticResource SecondaryBrush}" FontWeight="Bold" Margin="15,0"/>
+                                                                <DockPanel Margin="15,10">
+                                                                    <TextBlock Text="{Binding Price, StringFormat='₹{0:F2}'}" FontSize="18" FontWeight="ExtraBold" Foreground="{StaticResource PrimaryBrush}" VerticalAlignment="Center"/>
+                                                                    <Button Command="{Binding DataContext.AddToCartCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Background="{StaticResource SecondaryBrush}" Foreground="White" BorderThickness="0" Padding="12,6" HorizontalAlignment="Right" Style="{StaticResource PrimaryButton}" Height="35" Width="80" FontSize="10">
+                                                                        <TextBlock Text="Add +"/>
+                                                                    </Button>
+                                                                </DockPanel>
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <!-- Sidebar Advertisements (Right) -->
+                                        <StackPanel Grid.Column="1" Margin="30,0,0,0">
+                                                                                        <TextBlock Text="Featured Promotions" FontSize="26" FontWeight="ExtraBold" Margin="0,0,0,30" Foreground="{StaticResource PrimaryBrush}"/>
+
+                                            <ItemsControl ItemsSource="{Binding Advertisements}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Margin="0,0,0,35" Background="White" CornerRadius="30" ClipToBounds="True" BorderBrush="#EEE" BorderThickness="1" MinHeight="220">
+                                                            <Border.Effect>
+                                                                <DropShadowEffect BlurRadius="30" Opacity="0.1" ShadowDepth="10" Color="#000"/>
+                                                            </Border.Effect>
+                                                            <Grid>
+                                                                <Image Source="{Binding ImagePath}" Stretch="UniformToFill" Opacity="0.95"/>
+                                                                <Border>
+                                                                    <Border.Background>
+                                                                        <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                                                            <GradientStop Color="Transparent" Offset="0"/>
+                                                                            <GradientStop Color="#CC000000" Offset="1"/>
+                                                                        </LinearGradientBrush>
+                                                                    </Border.Background>
+                                                                </Border>
+                                                                <StackPanel VerticalAlignment="Bottom" Margin="25">
+                                                                    <Border Background="{StaticResource SecondaryBrush}" HorizontalAlignment="Left" CornerRadius="10" Padding="12,5" Margin="0,0,0,12">
+                                                                        <TextBlock Text="EXCLUSIVE" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                                                                    </Border>
+                                                                    <TextBlock Text="{Binding Title}" Foreground="White" FontSize="22" FontWeight="Bold" TextWrapping="Wrap"/>
+                                                                    <TextBlock Text="Shop Now →" Foreground="{StaticResource SecondaryBrush}" FontWeight="Bold" Margin="0,8,0,0"/>
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Footer -->
+                            <Border Background="{StaticResource PrimaryBrush}" Padding="120,80">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="2*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="EPICUREAN" Foreground="White" FontSize="28" FontWeight="ExtraBold" Margin="0,0,0,25"/>
+                                        <TextBlock Text="The world's leading premium e-commerce platform for gourmet food and exquisite coffee. Quality, taste, and luxury delivered." Foreground="#888" TextWrapping="Wrap" FontSize="16" LineHeight="28" Width="400" HorizontalAlignment="Left"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Customer Care" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,25"/>
+                                        <TextBlock Text="Shipping Policy" Foreground="#888" Margin="0,8"/>
+                                        <TextBlock Text="Return &amp; Refund" Foreground="#888" Margin="0,8"/>
+                                        <TextBlock Text="Privacy Policy" Foreground="#888" Margin="0,8"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" HorizontalAlignment="Right">
+                                        <TextBlock Text="Newsletter" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,25"/>
+                                        <Border Width="250" Background="#33FFFFFF" CornerRadius="20" Padding="15,10">
+                                            <TextBlock Text="your@email.com" Foreground="#666"/>
+                                        </Border>
+                                        <Button Content="SUBSCRIBE" Style="{StaticResource PrimaryButton}" Margin="0,15,0,0" Width="250" Height="45" FontSize="12"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- PRODUCT DETAILS PAGE -->
+                    <Grid Visibility="{Binding CurrentPage, Converter={StaticResource PageVisConv}, ConverterParameter=Details}" Style="{StaticResource AnimatedPage}" Background="White">
+                        <Grid Margin="120,60">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="1.3*"/><ColumnDefinition Width="1*"/></Grid.ColumnDefinitions>
+                            
+                            <Border Grid.Column="0" CornerRadius="40" Background="#F8F9FA" Padding="60" Margin="0,0,80,0">
+                                <Grid>
+                                    <Image Source="{Binding SelectedProduct.ImagePath}" Stretch="Uniform">
+                                        <Image.Effect><DropShadowEffect BlurRadius="50" Opacity="0.1" ShadowDepth="20"/></Image.Effect>
+                                    </Image>
+                                    <Button Command="{Binding NavigateCommand}" CommandParameter="Dashboard" VerticalAlignment="Top" HorizontalAlignment="Left" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                        <TextBlock Text="← BACK TO MARKETPLACE" Foreground="Gray" FontSize="14" FontWeight="Bold" />
+                                    </Button>
+                                </Grid>
+                            </Border>
+                            
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding SelectedProduct.Category}" Foreground="{StaticResource SecondaryBrush}" FontWeight="Bold"  Margin="0,0,0,15"/>
+                                <TextBlock Text="{Binding SelectedProduct.Name}" FontSize="68" FontWeight="ExtraBold" Foreground="{StaticResource PrimaryBrush}" LineHeight="75"/>
+                                
+                                <StackPanel Orientation="Horizontal" Margin="0,25">
+                                    <TextBlock Text="★★★★★" FontSize="22" Foreground="#F1C40F"/>
+                                    <TextBlock Text="4.9 (2,450 Verified Reviews)" Foreground="Gray" Margin="15,0" VerticalAlignment="Center" FontSize="15"/>
+                                </StackPanel>
+                                
+                                <TextBlock Text="{Binding SelectedProduct.Price, StringFormat='₹{0:F2}'}" FontSize="56" FontWeight="ExtraBold" Foreground="{StaticResource SecondaryBrush}" Margin="0,10,0,40"/>
+                                
+                                <TextBlock Text="OVERVIEW" FontSize="14" FontWeight="Bold"  Margin="0,0,0,15" Foreground="{StaticResource PrimaryBrush}"/>
+                                <TextBlock Text="{Binding SelectedProduct.Description}" FontSize="18" Foreground="Gray" TextWrapping="Wrap" LineHeight="32" Margin="0,0,0,50"/>
+                                
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0" Content="ADD TO BASKET" Command="{Binding AddToCartCommand}" CommandParameter="{Binding SelectedProduct}" Style="{StaticResource PrimaryButton}" Height="75" FontSize="20"/>
+                                    <Button Grid.Column="1" Command="{Binding ToggleLikeCommand}" CommandParameter="{Binding SelectedProduct}" Width="75" Height="75" Margin="25,0,0,0" Background="White" BorderBrush="#EEE" BorderThickness="1" Style="{StaticResource PrimaryButton}">
+                                        <TextBlock Text="♥" FontSize="32" Foreground="{Binding SelectedProduct.IsLiked, Converter={StaticResource BoolBrushConv}}"/>
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+
+                    <!-- CART PAGE -->
+                    <Grid Visibility="{Binding CurrentPage, Converter={StaticResource PageVisConv}, ConverterParameter=Cart}" Style="{StaticResource AnimatedPage}" Background="White">
+                        <Grid Margin="120,80">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="1.6*"/><ColumnDefinition Width="1*"/></Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0" Margin="0,0,80,0">
+                                <TextBlock Text="Your Basket" FontSize="48" FontWeight="ExtraBold" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,0,50"/>
+                                
+                                <Grid>
+                                    <ScrollViewer VerticalScrollBarVisibility="Hidden" MaxHeight="600">
+                                        <ItemsControl ItemsSource="{Binding CartItems}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border BorderBrush="#F0F0F0" BorderThickness="0,0,0,1" Padding="0,25" Margin="0,0,0,15">
+                                                        <DockPanel>
+                                                            <Border Width="120" Height="120" Background="#F8F9FA" CornerRadius="20" Margin="0,0,30,0">
+                                                                <Image Source="{Binding ImagePath}" Stretch="Uniform" Margin="15"/>
+                                                            </Border>
+                                                            <StackPanel VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding Name}" FontSize="22" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
+                                                                <TextBlock Text="{Binding Category}" Foreground="Gray" FontSize="14" Margin="0,6"/>
+                                                            </StackPanel>
+                                                            <Button DockPanel.Dock="Right" Command="{Binding DataContext.RemoveFromCartCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Background="Transparent" BorderThickness="0" VerticalAlignment="Center">
+                                                                <Border Background="#FFF5F5" CornerRadius="25" Padding="15">
+                                                                    <TextBlock Text="✖" Foreground="#E74C3C" FontWeight="Bold"/>
+                                                                </Border>
+                                                            </Button>
+                                                            <TextBlock DockPanel.Dock="Right" Text="{Binding Price, StringFormat='₹{0:F2}'}" FontSize="24" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,50,0" Foreground="{StaticResource PrimaryBrush}"/>
+                                                        </DockPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                    
+                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding CartItems.Count}" Value="0">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
+                                        <Image Source="Assets/empty-cart.png" Width="200" Height="200" Stretch="Uniform" Opacity="0.5"/>
+                                        <TextBlock Text="Your basket is empty" FontSize="20" Foreground="Gray" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,20,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+
+                            <Border Grid.Column="1" Style="{StaticResource CardStyle}" Padding="45" Background="#FBFBFC" VerticalAlignment="Stretch" BorderBrush="#EEE" BorderThickness="1">
+                                <ScrollViewer VerticalScrollBarVisibility="Hidden">
+                                    <StackPanel>
+                                        <TextBlock Text="Order Summary" FontSize="28" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,0,35"/>
+                                        
+                                        <TextBlock Text="DELIVERY INFORMATION" FontSize="11" FontWeight="Bold"  Foreground="Gray" Margin="0,0,0,15"/>
+                                        <TextBlock Text="Phone Number" Foreground="Gray" Margin="0,0,0,5"/>
+                                        <TextBox x:Name="CartPhone" Style="{StaticResource ModernTextBox}" Text="{Binding CurrentUser.Phone}" Margin="0,0,0,15"/>
+                                        <TextBlock Text="Full Delivery Address" Foreground="Gray" Margin="0,0,0,5"/>
+                                        <TextBox x:Name="CartAddr" Style="{StaticResource ModernTextBox}" Height="100" TextWrapping="Wrap" AcceptsReturn="True" Text="{Binding CurrentUser.Address}"/>
+                                        
+                                        <TextBlock Text="PAYMENT METHOD" FontSize="11" FontWeight="Bold"  Foreground="Gray" Margin="0,25,0,10"/>
+                                        <Border CornerRadius="15" BorderBrush="#EEE" BorderThickness="1" Background="White" Padding="10,0">
+                                            <ComboBox x:Name="PayMethod" SelectedIndex="0" Height="55" BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center">
+                                                <ComboBoxItem Content="Pay Online (Secure)"/>
+                                                <ComboBoxItem Content="Cash On Delivery"/>
+                                            </ComboBox>
+                                        </Border>
+                                        
+                                        <Separator Margin="0,35" Background="#EEE"/>
+                                        
+                                        <DockPanel Margin="0,0,0,15">
+                                            <TextBlock Text="Subtotal" Foreground="Gray" FontSize="16"/>
+                                            <TextBlock Text="{Binding CartTotal, StringFormat='₹{0:F2}'}" HorizontalAlignment="Right" FontWeight="Bold" FontSize="16"/>
+                                        </DockPanel>
+                                        <DockPanel Margin="0,0,0,30">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Image Source="Assets/delivery-bike.png" Width="24" Height="24" Margin="0,0,10,0"/>
+                                                <TextBlock Text="Express Shipping" Foreground="Gray" FontSize="16" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <TextBlock Text="FREE" HorizontalAlignment="Right" Foreground="#27AE60" FontWeight="Bold" FontSize="16" VerticalAlignment="Center"/>
+                                        </DockPanel>
+                                        
+                                        <DockPanel>
+                                            <TextBlock Text="GRAND TOTAL" FontSize="22" FontWeight="ExtraBold" Foreground="{StaticResource PrimaryBrush}"/>
+                                            <TextBlock Text="{Binding CartTotal, StringFormat='₹{0:F2}'}" FontSize="32" FontWeight="ExtraBold" HorizontalAlignment="Right" Foreground="{StaticResource SecondaryBrush}"/>
+                                        </DockPanel>
+                                        
+                                        <Button Content="BUY NOW / CHECKOUT" Command="{Binding CheckoutCommand}" Margin="0,45,0,0" Style="{StaticResource PrimaryButton}" Height="70" FontSize="20" FontWeight="Bold">
+                                            <Button.CommandParameter>
+                                                <MultiBinding Converter="{StaticResource MultiParamConv}">
+                                                    <Binding ElementName="CartAddr" Path="Text"/>
+                                                    <Binding ElementName="CartPhone" Path="Text"/>
+                                                    <Binding ElementName="PayMethod" Path="SelectedItem.Content"/>
+                                                </MultiBinding>
+                                            </Button.CommandParameter>
+                                        </Button>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Border>
+                        </Grid>
+                    </Grid>
+
+                    <!-- PAYMENT PAGE (FULL PAGE) -->
+                    <Grid Visibility="{Binding CurrentPage, Converter={StaticResource PageVisConv}, ConverterParameter=Payment}" Style="{StaticResource AnimatedPage}" Background="White">
+                         <Grid>
+                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="450"/></Grid.ColumnDefinitions>
+                             
+                             <!-- Left: Payment Form -->
+                             <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                                 <StackPanel Margin="120,60">
+                                     <Button Command="{Binding NavigateCommand}" CommandParameter="Cart" HorizontalAlignment="Left" Background="Transparent" BorderThickness="0" Margin="0,0,0,40">
+                                         <TextBlock Text="← RETURN TO BASKET" Foreground="Gray" FontWeight="Bold"/>
+                                     </Button>
+                                     
+                                     <TextBlock Text="Secure Checkout" FontSize="48" FontWeight="ExtraBold" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,0,10"/>
+                                     <TextBlock Text="Complete your purchase using our encrypted payment gateway." Foreground="Gray" FontSize="18" Margin="0,0,0,60"/>
+                                     
+                                     <Border Background="#F8F9FA" CornerRadius="25" Padding="40" Margin="0,0,0,40">
+                                         <StackPanel>
+                                             <TextBlock Text="PAYMENT DETAILS" FontSize="12" FontWeight="Bold" Foreground="{StaticResource SecondaryBrush}" Margin="0,0,0,25"/>
+                                             
+                                             <TextBlock Text="Cardholder Name" Foreground="Gray" Margin="0,0,0,8"/>
+                                             <TextBox Style="{StaticResource ModernTextBox}" Text="{Binding CurrentUser.Name}" Margin="0,0,0,25"/>
+                                             
+                                             <TextBlock Text="Card Number" Foreground="Gray" Margin="0,0,0,8"/>
+                                             <TextBox Style="{StaticResource ModernTextBox}" Tag="0000 0000 0000 0000" Margin="0,0,0,25"/>
+                                             
+                                             <Grid>
+                                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                 <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                                                     <TextBlock Text="Expiry Date" Foreground="Gray" Margin="0,0,0,8"/>
+                                                     <TextBox Style="{StaticResource ModernTextBox}" Tag="MM / YY"/>
+                                                 </StackPanel>
+                                                 <StackPanel Grid.Column="1" Margin="15,0,0,0">
+                                                     <TextBlock Text="CVV" Foreground="Gray" Margin="0,0,0,8"/>
+                                                     <TextBox Style="{StaticResource ModernTextBox}" Tag="***"/>
+                                                 </StackPanel>
+                                             </Grid>
+                                         </StackPanel>
+                                     </Border>
+
+                                     <Border Background="#FFF8F0" CornerRadius="20" Padding="30" BorderBrush="#FFE0B2" BorderThickness="1">
+                                         <DockPanel>
+                                             <TextBlock Text="🛡️" FontSize="24" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                                             <TextBlock Text="Your payment is 100% secure. We do not store your card details." Foreground="#E65100" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                         </DockPanel>
+                                     </Border>
+
+                                     <Button Content="PAY AND COMPLETE ORDER" Command="{Binding CompletePaymentCommand}" Margin="0,50,0,0" Style="{StaticResource PrimaryButton}" Height="75" FontSize="22"/>
+                                 </StackPanel>
+                             </ScrollViewer>
+
+                             <!-- Right: Order Brief -->
+                             <Border Grid.Column="1" Background="#FBFBFC" BorderBrush="#EEE" BorderThickness="1,0,0,0" Padding="45">
+                                 <DockPanel>
+                                     <TextBlock DockPanel.Dock="Top" Text="Order Summary" FontSize="24" FontWeight="Bold" Margin="0,0,0,35"/>
+                                     <Button DockPanel.Dock="Bottom" Content="CANCEL TRANSACTION" Command="{Binding NavigateCommand}" CommandParameter="Cart" Background="Transparent" Foreground="Red" Opacity="0.6" Margin="0,20,0,0"/>
+                                     
+                                     <ScrollViewer VerticalScrollBarVisibility="Hidden">
+                                         <StackPanel>
+                                             <ItemsControl ItemsSource="{Binding CartItems}">
+                                                 <ItemsControl.ItemTemplate>
+                                                     <DataTemplate>
+                                                         <Grid Margin="0,0,0,20">
+                                                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                             <Border Width="50" Height="50" Background="White" CornerRadius="10">
+                                                                 <Image Source="{Binding ImagePath}" Stretch="Uniform" Margin="5"/>
+                                                             </Border>
+                                                             <StackPanel Grid.Column="1" Margin="15,0" VerticalAlignment="Center">
+                                                                 <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14" TextTrimming="CharacterEllipsis"/>
+                                                                 <TextBlock Text="{Binding Price, StringFormat='₹{0:F2}'}" Foreground="Gray" FontSize="12"/>
+                                                             </StackPanel>
+                                                             <TextBlock Grid.Column="2" Text="x1" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                         </Grid>
+                                                     </DataTemplate>
+                                                 </ItemsControl.ItemTemplate>
+                                             </ItemsControl>
+                                             
+                                             <Separator Margin="0,20" Background="#EEE"/>
+                                             
+                                             <DockPanel Margin="0,10">
+                                                 <TextBlock Text="Subtotal" Foreground="Gray"/>
+                                                 <TextBlock Text="{Binding CartTotal, StringFormat='₹{0:F2}'}" HorizontalAlignment="Right" FontWeight="Bold"/>
+                                             </DockPanel>
+                                             <DockPanel Margin="0,10">
+                                                 <TextBlock Text="Shipping" Foreground="Gray"/>
+                                                 <TextBlock Text="FREE" HorizontalAlignment="Right" Foreground="#27AE60" FontWeight="Bold"/>
+                                             </DockPanel>
+                                             <DockPanel Margin="0,20,0,0">
+                                                 <TextBlock Text="Total" FontSize="20" FontWeight="Bold"/>
+                                                 <TextBlock Text="{Binding CartTotal, StringFormat='₹{0:F2}'}" FontSize="28" FontWeight="ExtraBold" HorizontalAlignment="Right" Foreground="{StaticResource SecondaryBrush}"/>
+                                             </DockPanel>
+                                         </StackPanel>
+                                     </ScrollViewer>
+                                 </DockPanel>
+                             </Border>
+                         </Grid>
+                    </Grid>
+
+                    <!-- OFFERS PAGE -->
+                    <Grid Visibility="{Binding CurrentPage, Converter={StaticResource PageVisConv}, ConverterParameter=Offers}" Style="{StaticResource AnimatedPage}" Background="White">
+                         <ScrollViewer Margin="40,60">
+                            <StackPanel>
+                                <TextBlock Text="D-Mart Exclusive Offers" FontSize="48" FontWeight="ExtraBold" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,0,20"/>
+                                <TextBlock Text="Unbeatable deals updated daily just for you." Foreground="Gray" FontSize="18" Margin="0,0,0,50"/>
+                                
+                                <ItemsControl ItemsSource="{Binding Offers}">
+                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel HorizontalAlignment="Center"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Width="400" MinHeight="260" Margin="15" CornerRadius="30" ClipToBounds="True">
+                                                <Border.Background>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                        <GradientStop Color="{StaticResource PrimaryColor}" Offset="0"/>
+                                                        <GradientStop Color="#444" Offset="1"/>
+                                                    </LinearGradientBrush>
+                                                </Border.Background>
+                                                <Grid>
+                                                    <StackPanel VerticalAlignment="Center" Margin="40">
+                                                        <TextBlock Text="{Binding Title}" Foreground="White" FontSize="24" FontWeight="Bold" TextWrapping="Wrap"/>
+                                                        <TextBlock Text="{Binding Description}" Foreground="#AAA" FontSize="14" Margin="0,10,0,25" TextWrapping="Wrap" MaxHeight="80" Opacity="0.9"/>
+                                                        <Button Content="GET OFFER" Style="{StaticResource PrimaryButton}" Width="150" Height="45" HorizontalAlignment="Left" Background="{StaticResource SecondaryBrush}"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- USER PROFILE PAGE (Settings) -->
+                    <Grid Visibility="{Binding CurrentPage, Converter={StaticResource PageVisConv}, ConverterParameter=Profile}" Style="{StaticResource AnimatedPage}" Background="#FBFBFB">
+                         <Grid Margin="120,80">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="400"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0" Margin="0,0,60,0">
+                                <Border Width="160" Height="160" CornerRadius="80" Background="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,30" BorderBrush="White" BorderThickness="5">
+                                    <Border.Effect><DropShadowEffect BlurRadius="20" Opacity="0.1"/></Border.Effect>
+                                    <TextBlock Text="{Binding CurrentUser.Name[0]}" Foreground="White" FontSize="72" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="{Binding CurrentUser.Name}" FontSize="32" FontWeight="ExtraBold" HorizontalAlignment="Center" Foreground="{StaticResource PrimaryBrush}"/>
+                                <TextBlock Text="{Binding CurrentUser.Email}" Foreground="Gray" HorizontalAlignment="Center" FontSize="16" Margin="0,5,0,0"/>
+                                
+                                <Border Background="White" CornerRadius="20" Padding="30" Margin="0,40,0,0" BorderBrush="#EEE" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="ACCOUNT SECURITY" FontSize="11" FontWeight="Bold" Foreground="Gray" Margin="0,0,0,20"/>
+                                        <Button Content="Change Password" Style="{StaticResource NavButtonStyle}" HorizontalContentAlignment="Left" Foreground="{StaticResource SecondaryBrush}" Width="150" Height="40" Padding="5"/>
+                                        <Button Content="Two-Factor Auth" Style="{StaticResource NavButtonStyle}" HorizontalContentAlignment="Left" Margin="0,10,0,0" Width="150" Height="40" Padding="5"/>
+                                        <Button Content="Privacy Settings" Style="{StaticResource NavButtonStyle}" HorizontalContentAlignment="Left" Margin="0,10,0,0" Width="150" Height="40" Padding="5"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                            
+                            <Border Grid.Column="1" Style="{StaticResource CardStyle}" Padding="60" Background="White">
+                                <StackPanel>
+                                    <TextBlock Text="Profile Settings" FontSize="36" FontWeight="ExtraBold" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,0,45"/>
+                                    
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                                            <TextBlock Text="Full Name" Foreground="Gray" Margin="0,0,0,8"/>
+                                            <TextBox x:Name="ProfName2" Style="{StaticResource ModernTextBox}" Text="{Binding CurrentUser.Name}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Margin="15,0,0,0">
+                                            <TextBlock Text="Phone Number" Foreground="Gray" Margin="0,0,0,8"/>
+                                            <TextBox x:Name="ProfPhone2" Style="{StaticResource ModernTextBox}" Text="{Binding CurrentUser.Phone}"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    
+                                    <TextBlock Text="Shipping Address" Foreground="Gray" Margin="0,25,0,8"/>
+                                    <TextBox x:Name="ProfAddr2" Style="{StaticResource ModernTextBox}" Height="120" TextWrapping="Wrap" AcceptsReturn="True" Text="{Binding CurrentUser.Address}"/>
+                                    
+                                    <Button Content="SAVE PROFILE CHANGES" Command="{Binding UpdateProfileCommand}" Margin="0,50,0,0" Style="{StaticResource PrimaryButton}" Height="70" Width="300" HorizontalAlignment="Left">
+                                        <Button.CommandParameter>
+                                            <MultiBinding Converter="{StaticResource MultiParamConv}">
+                                                <Binding ElementName="ProfName2" Path="Text"/><Binding ElementName="ProfPhone2" Path="Text"/><Binding ElementName="ProfAddr2" Path="Text"/>
+                                            </MultiBinding>
+                                        </Button.CommandParameter>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Grid>
+
+                    <!-- MY ORDERS PAGE (History) -->
+                    <Grid Visibility="{Binding CurrentPage, Converter={StaticResource PageVisConv}, ConverterParameter=MyOrders}" Style="{StaticResource AnimatedPage}" Background="#FBFBFB">
+                        <Grid Margin="120,80">
+                            <StackPanel>
+                                <TextBlock Text="Order History" FontSize="48" FontWeight="ExtraBold" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,0,10"/>
+                                <TextBlock Text="Track and manage your past and current purchases." Foreground="Gray" FontSize="18" Margin="0,0,0,60"/>
+                                
+                                <ItemsControl ItemsSource="{Binding UserOrders}">
+                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="White" CornerRadius="25" Padding="35" Margin="0,0,0,25" BorderBrush="#EEE" BorderThickness="1">
+                                                <Border.Effect><DropShadowEffect BlurRadius="20" Opacity="0.05" ShadowDepth="5"/></Border.Effect>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    
+                                                    <Border Width="80" Height="80" Background="#F8F9FA" CornerRadius="20">
+                                                        <TextBlock Text="📦" FontSize="40" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    
+                                                    <StackPanel Grid.Column="1" Margin="30,0" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Id, StringFormat='Order #DM-{0}'}" FontWeight="ExtraBold" FontSize="20" Foreground="{StaticResource PrimaryBrush}"/>
+                                                        <TextBlock Text="{Binding OrderDate, StringFormat='Placed on {0:MMMM dd, yyyy}'}" Foreground="Gray" FontSize="14" Margin="0,5,0,0"/>
+                                                    </StackPanel>
+                                                    
+                                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="40,0">
+                                                        <TextBlock Text="STATUS" FontSize="11" Foreground="Gray" FontWeight="Bold" Margin="0,0,0,5"/>
+                                                        <Border Background="#E3F2FD" CornerRadius="12" Padding="15,6">
+                                                            <TextBlock Text="{Binding Status}" Foreground="#1976D2" FontWeight="Bold"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                    
+                                                    <StackPanel Grid.Column="3" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding TotalAmount, StringFormat='₹{0:F2}'}" FontSize="24" FontWeight="ExtraBold" Foreground="{StaticResource SecondaryBrush}"/>
+                                                        <Button Content="View Details →" Command="{Binding DataContext.SelectOrderCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Background="Transparent" BorderThickness="0" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" Margin="0,5,0,0"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+
+                    <!-- ORDER DETAILS PAGE -->
+                    <Grid Visibility="{Binding CurrentPage, Converter={StaticResource PageVisConv}, ConverterParameter=OrderDetails}" Style="{StaticResource AnimatedPage}" Background="#F8F9FB">
+                         <Grid Margin="120,60">
+                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="400"/></Grid.ColumnDefinitions>
+                             
+                             <StackPanel Grid.Column="0">
+                                 <Button Command="{Binding NavigateCommand}" CommandParameter="MyOrders" HorizontalAlignment="Left" Background="Transparent" BorderThickness="0" Margin="0,0,0,30">
+                                     <TextBlock Text="← BACK TO ORDER HISTORY" Foreground="Gray" FontWeight="Bold"/>
+                                 </Button>
+                                 <TextBlock Text="Order Overview" FontSize="48" FontWeight="ExtraBold" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,0,10"/>
+                                 <TextBlock Text="{Binding SelectedOrder.Id, StringFormat='DM-ORD-{0}'}" FontSize="20" Foreground="{StaticResource SecondaryBrush}" FontWeight="Bold" Margin="0,0,0,50"/>
+                                 
+                                 <ItemsControl ItemsSource="{Binding SelectedOrder.Items}">
+                                     <ItemsControl.ItemTemplate>
+                                         <DataTemplate>
+                                             <Border Background="White" Margin="0,0,0,20" Padding="25" CornerRadius="25" BorderBrush="#EEE" BorderThickness="1">
+                                                 <Grid>
+                                                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                     <Border Width="70" Height="70" Background="#F8F9FA" CornerRadius="15">
+                                                         <TextBlock Text="🎁" FontSize="36" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                     </Border>
+                                                     <StackPanel Grid.Column="1" Margin="25,0" VerticalAlignment="Center">
+                                                         <TextBlock Text="{Binding ProductName}" FontWeight="Bold" FontSize="20"/>
+                                                         <TextBlock Text="{Binding Price, StringFormat='Price per unit: ?{0:F2}'}" Foreground="Gray" Margin="0,4,0,0"/>
+                                                     </StackPanel>
+                                                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                                         <TextBlock Text="{Binding Quantity, StringFormat='x{0}'}" FontWeight="ExtraBold" FontSize="22" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Right"/>
+                                                         <TextBlock Text="{Binding Price, StringFormat='Subtotal: ?{0:F2}'}" Foreground="Gray" FontSize="12" Margin="0,4,0,0"/>
+                                                     </StackPanel>
+                                                 </Grid>
+                                             </Border>
+                                         </DataTemplate>
+                                     </ItemsControl.ItemTemplate>
+                                 </ItemsControl>
+                             </StackPanel>
+                             
+                             <Border Grid.Column="1" Style="{StaticResource CardStyle}" VerticalAlignment="Top" Margin="40,90,0,0" Padding="45" Background="White">
+                                 <StackPanel>
+                                     <TextBlock Text="Delivery Details" FontWeight="Bold" FontSize="24" Margin="0,0,0,35"/>
+                                     
+                                     <TextBlock Text="SHIPPING ADDRESS" FontSize="11" Foreground="Gray" FontWeight="Bold" Margin="0,0,0,8"/>
+                                     <TextBlock Text="{Binding SelectedOrder.Address}" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="15" LineHeight="22"/>
+                                     
+                                     <TextBlock Text="CONTACT INFO" FontSize="11" Foreground="Gray" FontWeight="Bold" Margin="0,0,0,8"/>
+                                     <TextBlock Text="{Binding SelectedOrder.Phone}" Margin="0,0,0,25" FontSize="15"/>
+                                     
+                                     <TextBlock Text="PAYMENT STATUS" FontSize="11" Foreground="Gray" FontWeight="Bold" Margin="0,0,0,8"/>
+                                     <Border Background="#E8F5E9" HorizontalAlignment="Left" CornerRadius="10" Padding="15,6" Margin="0,0,0,35">
+                                         <TextBlock Text="PAID SECURELY" Foreground="#2E7D32" FontWeight="Bold" FontSize="12"/>
+                                     </Border>
+                                     
+                                     <Separator Margin="0,0,0,25" Background="#EEE"/>
+                                     
+                                     <DockPanel>
+                                         <TextBlock Text="GRAND TOTAL" FontWeight="Bold" FontSize="16" VerticalAlignment="Center"/>
+                                         <TextBlock Text="{Binding SelectedOrder.TotalAmount, StringFormat='₹{0:F2}'}" HorizontalAlignment="Right" FontWeight="ExtraBold" FontSize="32" Foreground="{StaticResource SecondaryBrush}"/>
+                                     </DockPanel>
+                                 </StackPanel>
+                             </Border>
+                         </Grid>
+                    </Grid>
+
+                    <!-- ADMIN COMMAND CENTER -->
+                    <Grid Visibility="{Binding CurrentPage, Converter={StaticResource PageVisConv}, ConverterParameter=Admin}" Style="{StaticResource AnimatedPage}" Background="#F8F9FA">
+                        <Border Background="White" Padding="40" CornerRadius="30" Margin="40">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <Grid Grid.Row="0" Margin="0,0,0,30">
+                                    <StackPanel>
+                                        <TextBlock Text="D-MART ADMIN COMMAND CENTER" FontSize="32" FontWeight="ExtraBold" Foreground="{StaticResource PrimaryBrush}"/>
+                                        <TextBlock Text="Manage your marketplace products, users, and promotions." Foreground="Gray" FontSize="16" Margin="0,5,0,0"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                        <Button Content="Return to Shop" Command="{Binding NavigateCommand}" CommandParameter="Dashboard" Style="{StaticResource NavButtonStyle}" Width="160" Height="45" Margin="0,0,15,0"/>
+                                        <Button Command="{Binding LogoutCommand}" Style="{StaticResource NavButtonStyle}" Width="120" Height="45" Foreground="Red" Padding="15,5">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="⏻" Margin="0,0,10,0" VerticalAlignment="Center" FontSize="18"/>
+                                                <TextBlock Text="LOGOUT" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+
+                                <TabControl Grid.Row="1" Style="{StaticResource ModernTabControl}" SelectedIndex="{Binding AdminTabIndex}">
+                                    <!-- INVENTORY TAB -->
+                                    <TabItem Header="INVENTORY" Style="{StaticResource ModernTabItem}">
+                                        <Grid Margin="0,20,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="2*"/>
+                                                <ColumnDefinition Width="30"/>
+                                                <ColumnDefinition Width="1.2*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Product List -->
+                                            <Border Grid.Column="0" Style="{StaticResource CardStyle}" Padding="0" ClipToBounds="True">
+                                                <DockPanel>
+                                                    <TextBlock DockPanel.Dock="Top" Text="Current Products" FontSize="20" FontWeight="Bold" Margin="25,25,0,15"/>
+                                                    <DataGrid ItemsSource="{Binding Products}" AutoGenerateColumns="False" CanUserAddRows="False" Background="White" RowHeight="70" BorderThickness="0" HeadersVisibility="Column" GridLinesVisibility="None" Padding="10">
+                                                        <DataGrid.Resources>
+                                                            <Style TargetType="DataGridColumnHeader">
+                                                                <Setter Property="Background" Value="Transparent"/>
+                                                                <Setter Property="Foreground" Value="Gray"/>
+                                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                                <Setter Property="Padding" Value="10,15"/>
+                                                                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                                                <Setter Property="BorderBrush" Value="#EEE"/>
+                                                            </Style>
+                                                            <Style TargetType="DataGridCell">
+                                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                                <Setter Property="BorderThickness" Value="0"/>
+                                                                <Setter Property="Padding" Value="10"/>
+                                                            </Style>
+                                                        </DataGrid.Resources>
+                                                        <DataGrid.Columns>
+                                                            <DataGridTemplateColumn Header="IMAGE" Width="80">
+                                                                <DataGridTemplateColumn.CellTemplate>
+                                                                    <DataTemplate>
+                                                                        <Border Width="50" Height="50" CornerRadius="10" Background="#F8F9FA" Margin="5">
+                                                                            <Image Source="{Binding ImagePath}" Stretch="Uniform" Margin="5"/>
+                                                                        </Border>
+                                                                    </DataTemplate>
+                                                                </DataGridTemplateColumn.CellTemplate>
+                                                            </DataGridTemplateColumn>
+                                                            <DataGridTextColumn Header="PRODUCT NAME" Binding="{Binding Name}" Width="*">
+                                                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="FontWeight" Value="Bold"/><Setter Property="VerticalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
+                                                            </DataGridTextColumn>
+                                                            <DataGridTextColumn Header="CATEGORY" Binding="{Binding Category}" Width="150"/>
+                                                            <DataGridTextColumn Header="PRICE" Binding="{Binding Price, StringFormat='₹{0:F2}'}" Width="100"/>
+                                                            <DataGridTemplateColumn Header="ACTIONS" Width="120">
+                                                                <DataGridTemplateColumn.CellTemplate>
+                                                                    <DataTemplate>
+                                                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                                            <Button Content="✏️" Command="{Binding DataContext.EditProductCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Foreground="#3498DB" Background="Transparent" BorderThickness="0" FontSize="18" Margin="0,0,10,0" ToolTip="Edit"/>
+                                                                            <Button Content="🗑️" Command="{Binding DataContext.RemoveProductCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Foreground="#E74C3C" Background="Transparent" BorderThickness="0" FontSize="18" ToolTip="Delete"/>
+                                                                        </StackPanel>
+                                                                    </DataTemplate>
+                                                                </DataGridTemplateColumn.CellTemplate>
+                                                            </DataGridTemplateColumn>
+                                                        </DataGrid.Columns>
+                                                    </DataGrid>
+                                                </DockPanel>
+                                            </Border>
+
+                                            <!-- Add/Edit Form -->
+                                            <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="25" VerticalAlignment="Stretch">
+                                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                                    <StackPanel>
+                                                        <TextBlock Text="Product Details" FontSize="20" FontWeight="Bold" Margin="0,0,0,20"/>
+                                                        
+                                                        <Border Height="150" Background="#F8F9FA" CornerRadius="15" Margin="0,0,0,15" BorderBrush="#EEE" BorderThickness="1">
+                                                            <Image Source="{Binding NewProduct.ImagePath}" Stretch="Uniform" Margin="10"/>
+                                                        </Border>
+
+                                                        <TextBlock Text="Name" Foreground="Gray" Margin="0,0,0,5"/>
+                                                        <TextBox Text="{Binding NewProduct.Name, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}" Margin="0,0,0,15"/>
+
+                                                        <TextBlock Text="Price" Foreground="Gray" Margin="0,0,0,5"/>
+                                                        <TextBox Text="{Binding NewProduct.Price, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}" Margin="0,0,0,15"/>
+
+                                                        <TextBlock Text="Category" Foreground="Gray" Margin="0,0,0,5"/>
+                                                        <TextBox Text="{Binding NewProduct.Category, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}" Margin="0,0,0,15"/>
+
+                                                        <TextBlock Text="Image URL/Path" Foreground="Gray" Margin="0,0,0,5"/>
+                                                        <Grid Margin="0,0,0,15">
+                                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                            <TextBox Text="{Binding NewProduct.ImagePath, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                                                            <Button Grid.Column="1" Content="📁" Command="{Binding UploadProductImageCommand}" Background="Transparent" BorderThickness="0" FontSize="18" Margin="10,0,0,0" ToolTip="Upload Local Image"/>
+                                                        </Grid>
+
+                                                        <TextBlock Text="Description" Foreground="Gray" Margin="0,0,0,5"/>
+                                                        <TextBox Text="{Binding NewProduct.Description, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}" Height="80" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,0,0,25"/>
+
+                                                        <Button Content="SUBMIT / SAVE PRODUCT" Command="{Binding AddProductCommand}" Style="{StaticResource PrimaryButton}" Height="55" Width="240" HorizontalAlignment="Center"/>
+                                                        <Button Content="CLEAR FORM" Click="ClearNewProduct_Click" Background="Transparent" Foreground="Gray" BorderThickness="0" Margin="0,15,0,0"/>
+                                                    </StackPanel>
+                                                </ScrollViewer>
+                                            </Border>
+                                        </Grid>
+                                    </TabItem>
+
+                                    <!-- ORDERS & USERS TAB -->
+                                    <!-- SYSTEM USERS TAB -->
+                                    <TabItem Header="SYSTEM USERS" Style="{StaticResource ModernTabItem}">
+                                        <Grid Margin="0,20,0,0">
+                                            <Border Style="{StaticResource CardStyle}" Padding="0">
+                                                <DockPanel>
+                                                    <TextBlock DockPanel.Dock="Top" Text="All Registered Users" FontSize="20" FontWeight="Bold" Margin="25,25,0,15"/>
+                                                    <DataGrid ItemsSource="{Binding AllUsers}" AutoGenerateColumns="False" CanUserAddRows="False" Background="White" RowHeight="65" BorderThickness="0" HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#EEE" AlternatingRowBackground="#F8F9FA">
+                                                        <DataGrid.Columns>
+                                                            <DataGridTemplateColumn Header="USER" Width="*">
+                                                                <DataGridTemplateColumn.CellTemplate>
+                                                                    <DataTemplate>
+                                                                        <StackPanel Margin="15,0" VerticalAlignment="Center">
+                                                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"/>
+                                                                            <TextBlock Text="{Binding Email}" FontSize="12" Foreground="Gray"/>
+                                                                        </StackPanel>
+                                                                    </DataTemplate>
+                                                                </DataGridTemplateColumn.CellTemplate>
+                                                            </DataGridTemplateColumn>
+                                                            <DataGridTextColumn Header="PHONE" Binding="{Binding Phone}" Width="150"/>
+                                                            <DataGridTextColumn Header="ADDRESS" Binding="{Binding Address}" Width="2*"/>
+                                                            <DataGridTemplateColumn Width="150">
+                                                                <DataGridTemplateColumn.CellTemplate>
+                                                                    <DataTemplate>
+                                                                        <Button Content="VIEW ACTIVITY" Command="{Binding DataContext.SelectUserCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource SecondaryButton}" Height="35" Margin="10,0"/>
+                                                                    </DataTemplate>
+                                                                </DataGridTemplateColumn.CellTemplate>
+                                                            </DataGridTemplateColumn>
+                                                        </DataGrid.Columns>
+                                                    </DataGrid>
+                                                </DockPanel>
+                                            </Border>
+                                        </Grid>
+                                    </TabItem>
+
+                                    <!-- RECENT ORDERS TAB -->
+                                    <TabItem Header="RECENT ORDERS" Style="{StaticResource ModernTabItem}">
+                                        <Grid Margin="0,20,0,0">
+                                            <Border Style="{StaticResource CardStyle}" Padding="0">
+                                                <Grid>
+                                                    <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                                    <DockPanel Grid.Row="0">
+                                                        <TextBlock DockPanel.Dock="Top" Text="Global Order History" FontSize="20" FontWeight="Bold" Margin="25,25,0,15"/>
+                                                        <DataGrid ItemsSource="{Binding AllOrders}" SelectedItem="{Binding SelectedOrder}" AutoGenerateColumns="False" CanUserAddRows="False" Background="White" RowHeight="65" BorderThickness="0" HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#EEE" AlternatingRowBackground="#F8F9FA">
+                                                            <DataGrid.Columns>
+                                                                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="60"/>
+                                                                <DataGridTextColumn Header="CUSTOMER" Binding="{Binding UserName}" Width="*"/>
+                                                                <DataGridTextColumn Header="DATE" Binding="{Binding OrderDate, StringFormat='MMM dd, yyyy'}" Width="120"/>
+                                                                <DataGridTextColumn Header="TOTAL" Binding="{Binding TotalAmount, StringFormat='₹{0:F2}'}" Width="100"/>
+                                                                <DataGridTemplateColumn Header="STATUS" Width="150">
+                                                                    <DataGridTemplateColumn.CellTemplate>
+                                                                        <DataTemplate>
+                                                                            <ComboBox SelectedValue="{Binding Status, UpdateSourceTrigger=PropertyChanged}" SelectedValuePath="Content" BorderThickness="0" Height="35">
+                                                                                <ComboBoxItem Content="Pending"/>
+                                                                                <ComboBoxItem Content="Processing"/>
+                                                                                <ComboBoxItem Content="Shipped"/>
+                                                                                <ComboBoxItem Content="Delivered"/>
+                                                                            </ComboBox>
+                                                                        </DataTemplate>
+                                                                    </DataGridTemplateColumn.CellTemplate>
+                                                                </DataGridTemplateColumn>
+                                                            </DataGrid.Columns>
+                                                        </DataGrid>
+                                                    </DockPanel>
+
+                                                    <Border Grid.Row="1" Background="#F8F9FA" Padding="25" CornerRadius="0,0,30,30" Visibility="{Binding SelectedOrder, Converter={StaticResource ObjVisConv}}">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                            <StackPanel Grid.Column="0">
+                                                                <TextBlock Text="Order Items" FontWeight="Bold" Margin="0,0,0,15"/>
+                                                                <ItemsControl ItemsSource="{Binding SelectedOrder.Items}">
+                                                                    <ItemsControl.ItemTemplate>
+                                                                        <DataTemplate>
+                                                                            <DockPanel Margin="0,5">
+                                                                                <TextBlock Text="{Binding Quantity, StringFormat='{}{0}x'}" Foreground="Gray" Width="35"/>
+                                                                                <TextBlock Text="{Binding ProductName}" FontWeight="Medium"/>
+                                                                                <TextBlock Text="{Binding Price, StringFormat='₹{0:F2}'}" HorizontalAlignment="Right" DockPanel.Dock="Right"/>
+                                                                            </DockPanel>
+                                                                        </DataTemplate>
+                                                                    </ItemsControl.ItemTemplate>
+                                                                </ItemsControl>
+                                                            </StackPanel>
+                                                            <StackPanel Grid.Column="1" Margin="40,0,0,0">
+                                                                <TextBlock Text="Shipping Details" FontWeight="Bold" Margin="0,0,0,15"/>
+                                                                <TextBlock Text="{Binding SelectedOrder.Address}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                                                                <TextBlock Text="{Binding SelectedOrder.Phone, StringFormat='Contact: {0}'}" Foreground="Gray"/>
+                                                                <TextBlock Text="{Binding SelectedOrder.PaymentMethod, StringFormat='Method: {0}'}" Foreground="Gray" Margin="0,5,0,0"/>
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                        </Grid>
+                                    </TabItem>
+
+                                    <!-- CUSTOMER ORDERS TAB -->
+                                    <TabItem Header="CUSTOMER ORDERS" Style="{StaticResource ModernTabItem}">
+                                        <Grid Margin="0,20,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="350"/>
+                                                <ColumnDefinition Width="20"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- User Selection -->
+                                            <Border Grid.Column="0" Style="{StaticResource CardStyle}" Padding="0">
+                                                <DockPanel>
+                                                    <TextBlock DockPanel.Dock="Top" Text="Select Customer" FontSize="18" FontWeight="Bold" Margin="20,20,0,15"/>
+                                                    <ListBox ItemsSource="{Binding AllUsers}" SelectedItem="{Binding AdminSelectedUser}" BorderThickness="0">
+                                                        <ListBox.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border Padding="15,10">
+                                                                    <StackPanel>
+                                                                        <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                                                                        <TextBlock Text="{Binding Email}" FontSize="11" Foreground="Gray"/>
+                                                                    </StackPanel>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ListBox.ItemTemplate>
+                                                    </ListBox>
+                                                </DockPanel>
+                                            </Border>
+
+                                            <!-- User Detailed Orders -->
+                                            <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="25">
+                                                <DockPanel>
+                                                    <TextBlock DockPanel.Dock="Top" Text="{Binding AdminSelectedUser.Name, StringFormat='Order details for {0}'}" FontSize="20" FontWeight="Bold" Margin="0,0,0,20"/>
+                                                    <ScrollViewer>
+                                                        <ItemsControl ItemsSource="{Binding AdminUserOrders}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Border Background="#FBFBFB" CornerRadius="15" Padding="20" Margin="0,0,0,20" BorderBrush="#EEE" BorderThickness="1">
+                                                                        <StackPanel>
+                                                                            <DockPanel Margin="0,0,0,15">
+                                                                                <TextBlock Text="{Binding Id, StringFormat='Order #DM-{0}'}" FontWeight="ExtraBold" FontSize="16"/>
+                                                                                <TextBlock Text="{Binding Status}" HorizontalAlignment="Right" Foreground="{StaticResource SecondaryBrush}" FontWeight="Bold"/>
+                                                                            </DockPanel>
+                                                                            <ItemsControl ItemsSource="{Binding Items}">
+                                                                                <ItemsControl.ItemTemplate>
+                                                                                    <DataTemplate>
+                                                                                        <Grid Margin="0,5">
+                                                                                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                                                            <TextBlock Text="{Binding Quantity, StringFormat='{}{0}x'}" Width="30" Foreground="Gray"/>
+                                                                                            <TextBlock Grid.Column="1" Text="{Binding ProductName}" FontWeight="Medium"/>
+                                                                                            <TextBlock Grid.Column="2" Text="{Binding Price, StringFormat='₹{0:F2}'}" FontWeight="Bold"/>
+                                                                                        </Grid>
+                                                                                    </DataTemplate>
+                                                                                </ItemsControl.ItemTemplate>
+                                                                            </ItemsControl>
+                                                                            <Separator Margin="0,15"/>
+                                                                            <TextBlock Text="{Binding TotalAmount, StringFormat='Total Paid: ?{0:F2}'}" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                                                        </StackPanel>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </ScrollViewer>
+                                                </DockPanel>
+                                            </Border>
+                                        </Grid>
+                                    </TabItem>
+
+                                    <!-- MARKETING TAB -->
+                                    <TabItem Header="MARKETING" Style="{StaticResource ModernTabItem}">
+                                            <Grid Margin="0,20,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="20"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="20"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Carousel Banners -->
+                                                <Border Grid.Column="0" Style="{StaticResource CardStyle}" Padding="25">
+                                                    <ScrollViewer VerticalScrollBarVisibility="Hidden">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Carousel Banners" FontSize="20" FontWeight="Bold" Margin="0,0,0,20"/>
+                                                            
+                                                            <Border Height="120" Background="#F8F9FA" CornerRadius="10" Margin="0,0,0,15" BorderBrush="#EEE" BorderThickness="1">
+                                                                <Image Source="{Binding NewCarouselImage.ImagePath}" Stretch="Uniform" Margin="5"/>
+                                                            </Border>
+
+                                                            <ItemsControl ItemsSource="{Binding AdminCarouselImages}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Border Background="#F8F9FA" Margin="0,0,0,10" Padding="10" CornerRadius="10">
+                                                                            <Grid>
+                                                                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                                                <TextBlock Text="{Binding ImagePath}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="11"/>
+                                                                                <Button Grid.Column="1" Content="✖" Command="{Binding DataContext.RemoveCarouselImageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Foreground="Red" Background="Transparent" BorderThickness="0" Margin="10,0,0,0"/>
+                                                                            </Grid>
+                                                                        </Border>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                            <Separator Margin="0,10"/>
+                                                            <TextBlock Text="Add Image Path/Link" Foreground="Gray" Margin="0,10,0,5"/>
+                                                            <Grid Margin="0,0,0,15">
+                                                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                                <TextBox Text="{Binding NewCarouselImage.ImagePath, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                                                                <Button Grid.Column="1" Content="📁" Command="{Binding UploadCarouselImageCommand}" Background="Transparent" BorderThickness="0" Margin="10,0,0,0"/>
+                                                            </Grid>
+                                                            <Button Content="ADD BANNER" Command="{Binding AddCarouselImageCommand}" Style="{StaticResource PrimaryButton}" Height="45" Width="180" HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </ScrollViewer>
+                                                </Border>
+
+                                                <!-- Store Offers -->
+                                                <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="25">
+                                                    <ScrollViewer VerticalScrollBarVisibility="Hidden">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Special Offers" FontSize="20" FontWeight="Bold" Margin="0,0,0,20"/>
+                                                            
+                                                            <Border Height="100" Background="#F8F9FA" CornerRadius="10" Margin="0,0,0,15" BorderBrush="#EEE" BorderThickness="1">
+                                                                <Image Source="{Binding NewOffer.ImagePath}" Stretch="Uniform" Margin="5"/>
+                                                            </Border>
+
+                                                            <ItemsControl ItemsSource="{Binding Offers}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Border Background="#F8F9FA" Margin="0,0,0,10" Padding="10" CornerRadius="10">
+                                                                            <Grid>
+                                                                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                                                <StackPanel>
+                                                                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="13"/>
+                                                                                    <TextBlock Text="{Binding Description}" FontSize="11" Opacity="0.7"/>
+                                                                                </StackPanel>
+                                                                                <Button Grid.Column="1" Content="✖" Command="{Binding DataContext.RemoveOfferCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Foreground="Red" Background="Transparent" BorderThickness="0" Margin="10,0,0,0"/>
+                                                                            </Grid>
+                                                                        </Border>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                            <Separator Margin="0,10"/>
+                                                            <TextBlock Text="Offer Title" Foreground="Gray" Margin="0,10,0,5"/>
+                                                            <TextBox Text="{Binding NewOffer.Title, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}" Margin="0,0,0,10"/>
+                                                            <TextBlock Text="Image Path" Foreground="Gray" Margin="0,0,0,5"/>
+                                                            <Grid Margin="0,0,0,10">
+                                                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                                <TextBox Text="{Binding NewOffer.ImagePath, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                                                                <Button Grid.Column="1" Content="📁" Command="{Binding UploadOfferImageCommand}" Background="Transparent" BorderThickness="0" Margin="10,0,0,0"/>
+                                                            </Grid>
+                                                            <Button Content="ADD OFFER" Command="{Binding AddOfferCommand}" Style="{StaticResource PrimaryButton}" Height="45" Width="180" HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </ScrollViewer>
+                                                </Border>
+
+                                                <!-- Advertisement -->
+                                                <Border Grid.Column="4" Style="{StaticResource CardStyle}" Padding="25">
+                                                    <ScrollViewer VerticalScrollBarVisibility="Hidden">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Store Advertisements" FontSize="20" FontWeight="Bold" Margin="0,0,0,20"/>
+                                                            
+                                                            <Border Height="180" Background="#F8F9FA" CornerRadius="15" Margin="0,0,0,15" BorderBrush="#EEE" BorderThickness="1">
+                                                                <Image Source="{Binding NewAdvertisement.ImagePath}" Stretch="UniformToFill" Margin="0"/>
+                                                            </Border>
+
+                                                            <ItemsControl ItemsSource="{Binding Advertisements}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Border Background="#F8F9FA" Margin="0,0,0,10" Padding="10" CornerRadius="10">
+                                                                            <Grid>
+                                                                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                                                <StackPanel>
+                                                                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="13"/>
+                                                                                    <TextBlock Text="{Binding ImagePath}" FontSize="11" Opacity="0.5" TextTrimming="CharacterEllipsis"/>
+                                                                                </StackPanel>
+                                                                                <Button Grid.Column="1" Content="✖" Command="{Binding DataContext.RemoveAdvertisementCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Foreground="Red" Background="Transparent" BorderThickness="0" Margin="10,0,0,0"/>
+                                                                            </Grid>
+                                                                        </Border>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                            <Separator Margin="0,10"/>
+
+                                                            <TextBlock Text="Ad Title / Text" Foreground="Gray" Margin="0,10,0,5"/>
+                                                            <TextBox Text="{Binding NewAdvertisement.Title, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}" Margin="0,0,0,15"/>
+                                                            <TextBlock Text="Ad Image Path" Foreground="Gray" Margin="0,0,0,5"/>
+                                                            <Grid Margin="0,0,0,25">
+                                                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                                <TextBox Text="{Binding NewAdvertisement.ImagePath, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                                                                <Button Grid.Column="1" Content="📁" Command="{Binding UploadAdImageCommand}" Background="Transparent" BorderThickness="0" Margin="10,0,0,0"/>
+                                                            </Grid>
+                                                            <Button Content="ADD ADVERTISEMENT" Command="{Binding AddAdvertisementCommand}" Style="{StaticResource PrimaryButton}" Height="50" Width="200" HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </ScrollViewer>
+                                                </Border>
+                                            </Grid>
+                                        </TabItem>
+                                    </TabControl>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                </Grid>
+            </DockPanel>
+
+            <!-- LOADING OVERLAY -->
+            <Grid Visibility="{Binding IsLoading, Converter={StaticResource BoolVisConv}}" Background="#DDFFFFFF">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Ellipse Style="{StaticResource LoadingSpinnerStyle}"/>
+                    <TextBlock Text="CURATING YOUR EXPERIENCE..." Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" Margin="0,30,0,0"  FontSize="14"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Enhanced Toast Notification -->
+            <Border x:Name="ToastBorder" Background="#FF333333" CornerRadius="20" Padding="25" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,110,50,0" 
+                    Visibility="{Binding IsToastVisible, Converter={StaticResource BoolVisConv}}" MaxWidth="400">
+                <Border.Effect><DropShadowEffect BlurRadius="40" Opacity="0.3" ShadowDepth="10"/></Border.Effect>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <Border Grid.Column="0" Background="{StaticResource SecondaryBrush}" Width="45" Height="45" CornerRadius="22.5" Margin="0,0,15,0">
+                        <TextBlock Text="i" Foreground="White" FontWeight="Bold" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,0"/>
+                    </Border>
+                    
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Notification" Foreground="White" FontWeight="Bold" FontSize="14" Opacity="0.7" Margin="0,0,0,2"/>
+                        <TextBlock Text="{Binding ToastMessage}" Foreground="White" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    
+                    <Button Grid.Column="2" Click="HideToast_Click" Background="Transparent" BorderThickness="0" Cursor="Hand" VerticalAlignment="Top" Margin="10,-10,-10,0">
+                        <TextBlock Text="✖" Foreground="White" FontSize="16" Opacity="0.5"/>
+                    </Button>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
+
