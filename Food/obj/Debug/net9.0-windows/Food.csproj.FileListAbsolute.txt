@@ -274,3 +274,6 @@ C:\Users\Dens\source\repos\Food\Food\bin\Debug\net9.0-windows\Assets\review-auth
 C:\Users\Dens\source\repos\Food\Food\bin\Debug\net9.0-windows\Assets\review-author-5.jpg
 C:\Users\Dens\source\repos\Food\Food\bin\Debug\net9.0-windows\Assets\reviews.jpg
 C:\Users\Dens\source\repos\Food\Food\bin\Debug\net9.0-windows\Assets\salad.png
+C:\Users\Dens\source\repos\Food\Food\bin\Debug\net9.0-windows\Assets\background.jpg
+C:\Users\Dens\source\repos\Food\Food\bin\Debug\net9.0-windows\Assets\bg1.jpg
+C:\Users\Dens\source\repos\Food\Food\bin\Debug\net9.0-windows\Assets\bg2.jpg

@@ -105,6 +105,18 @@ namespace Food
                 RegPassText.Text = RegPass.Password;
         }
 
+        private void ChangePassOld_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (ChangePassOld.Visibility == Visibility.Visible)
+                ChangePassOldText.Text = ChangePassOld.Password;
+        }
+
+        private void ChangePassNew_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (ChangePassNew.Visibility == Visibility.Visible)
+                ChangePassNewText.Text = ChangePassNew.Password;
+        }
+
         private void RegPassText_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
             if (RegPassText.Visibility == Visibility.Visible)

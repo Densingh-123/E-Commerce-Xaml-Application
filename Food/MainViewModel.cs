@@ -52,6 +52,52 @@ namespace Food.ViewModels
         private bool _isToastVisible;
 
         [ObservableProperty]
+        private bool _isChangePasswordPopupOpen;
+
+        [ObservableProperty]
+        private bool _isPrivacyPopupOpen;
+
+        [RelayCommand]
+        public void OpenChangePassword() => IsChangePasswordPopupOpen = true;
+
+        [RelayCommand]
+        public void CloseChangePassword() => IsChangePasswordPopupOpen = false;
+
+        [RelayCommand]
+        public void OpenPrivacyPolicy() => IsPrivacyPopupOpen = true;
+
+        [RelayCommand]
+        public void ClosePrivacyPolicy() => IsPrivacyPopupOpen = false;
+
+        [RelayCommand]
+        public void SavePassword(object parameter)
+        {
+            var values = (object[])parameter;
+            string oldPass = (string)values[0];
+            string newPass = (string)values[1];
+            
+            if (oldPass != CurrentUser.Password)
+            {
+                ShowToast("Incorrect old password!");
+                return;
+            }
+            
+            if (string.IsNullOrWhiteSpace(newPass) || newPass.Length < 8)
+            {
+                ShowToast("New password must be at least 8 characters!");
+                return;
+            }
+            
+            CurrentUser.Password = newPass;
+            _db.UpdateUser(CurrentUser);
+            ShowToast("Password changed successfully!");
+            IsChangePasswordPopupOpen = false;
+        }
+
+        [ObservableProperty]
+        private bool _isCartPopupOpen;
+
+        [ObservableProperty]
         private bool _isProfilePopupOpen;
 
         [ObservableProperty]
